@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Anonymous Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="light-mode">
+    <div id="container" class="light-mode">
+        <h1>Your Profile</h1>
+        <p class="subtitle">Manage your Anonymous Chat account</p>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for category, message in messages %}
+                    <script>
+                    console.log("{{ category }}: {{ message }}");
+                    </script>
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="avatar">{{ user.username[0].upper() }}</div>
+                <h2>{{ user.username }}</h2>
+            </div>
+            
+            <div class="profile-details">
+                <div class="detail-item">
+                    <span class="label">Username:</span>
+                    <span class="value">{{ user.username }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Email:</span>
+                    <span class="value">{{ user.email }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Account Created:</span>
+                    <span class="value">{{ user.created_at }}</span>
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <a href="/" class="btn primary">Back to Chat</a>
+                <a href="/logout" class="btn warning">Logout</a>
+            </div>
+        </div>
+
+        <button id="mode-toggle">Switch to Dark Mode</button>
+    </div>
+    
+    <script>
+        // Toggle between light and dark mode
+        const body = document.body;
+        const container = document.getElementById('container');
+        
+        if (localStorage.getItem('darkMode') === 'true') {
+            body.classList.remove('light-mode');
+            body.classList.add('dark-mode');
+            container.classList.remove('light-mode');
+            container.classList.add('dark-mode');
+        }
+
+        // Dark mode toggle
+        const modeToggle = document.getElementById('mode-toggle');
+        modeToggle.addEventListener('click', function() {
+            const isDarkMode = body.classList.contains('dark-mode');
+
+            if (isDarkMode) {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                container.classList.remove('dark-mode');
+                container.classList.add('light-mode');
+                modeToggle.textContent = 'Switch to Dark Mode';
+                localStorage.setItem('darkMode', 'false');
+            } else {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                container.classList.remove('light-mode');
+                container.classList.add('dark-mode');
+                modeToggle.textContent = 'Switch to Light Mode';
+                localStorage.setItem('darkMode', 'true');
+            }
+        });
+    </script>
+</body>
+</html>

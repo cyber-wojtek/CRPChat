@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - Anonymous Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="light-mode">
+    <div id="container" class="light-mode">
+        <h1>Verify Your Email</h1>
+        <p class="subtitle">Enter the 21-digit code sent to your email</p>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for category, message in messages %}
+                    <script>
+                    console.log("{{ category }}: {{ message }}");
+                    </script>
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <form action="/verify/{{ user_id }}" method="post" class="auth-form">
+            <div class="form-group">
+                <label for="code">Verification Code</label>
+                <input type="text" id="code" name="code" 
+                       placeholder="Enter your 21-digit code" 
+                       pattern="[0-9]{21}" 
+                       title="Please enter the 21-digit code from your email"
+                       inputmode="numeric"
+                       required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn primary">Verify</button>
+            </div>
+            
+            <div class="form-footer">
+                <p>Didn't receive the code? Check your spam folder.</p>
+                <p>The verification code is valid for 24 hours.</p>
+                <a href="/" class="link">Back to Chat</a>
+            </div>
+        </form>
+
+        <button id="mode-toggle">Switch to Dark Mode</button>
+    </div>
+    
+    <script>
+        // Toggle between light and dark mode
+        const body = document.body;
+        const container = document.getElementById('container');
+        
+        if (localStorage.getItem('darkMode') === 'true') {
+            body.classList.remove('light-mode');
+            body.classList.add('dark-mode');
+            container.classList.remove('light-mode');
+            container.classList.add('dark-mode');
+        }
+        
+        // Format verification code with spaces for readability
+        const codeInput = document.getElementById('code');
+        codeInput.addEventListener('input', function(e) {
+            // Remove any non-digits
+            let val = this.value.replace(/\D/g, '');
+            // Limit to 21 digits
+            val = val.substring(0, 21);
+            this.value = val;
+        });
+
+        // Dark mode toggle
+        const modeToggle = document.getElementById('mode-toggle');
+        modeToggle.addEventListener('click', function() {
+            const isDarkMode = body.classList.contains('dark-mode');
+
+            if (isDarkMode) {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                container.classList.remove('dark-mode');
+                container.classList.add('light-mode');
+                modeToggle.textContent = 'Switch to Dark Mode';
+                localStorage.setItem('darkMode', 'false');
+            } else {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                container.classList.remove('light-mode');
+                container.classList.add('dark-mode');
+                modeToggle.textContent = 'Switch to Light Mode';
+                localStorage.setItem('darkMode', 'true');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Secure Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="light-mode">
+    <div id="container" class="light-mode">
+        <h1>Login</h1>
+        <p class="subtitle">Sign in to your Secure Chat account</p>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for category, message in messages %}
+                    <script>
+                    console.log("{{ category }}: {{ message }}");
+                    </script>
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form action="/login" method="post" class="auth-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn primary">Login</button>
+                <a href="/register" class="btn secondary">Register</a>
+            </div>
+        </form>
+
+        <button id="mode-toggle">Switch to Dark Mode</button> 
+    </div>
+    
+    <script>
+        // Toggle between light and dark mode
+        const body = document.body;
+        const container = document.getElementById('container');
+        
+        if (localStorage.getItem('darkMode') === 'true') {
+            body.classList.remove('light-mode');
+            body.classList.add('dark-mode');
+            container.classList.remove('light-mode');
+            container.classList.add('dark-mode');
+        }
+
+        // Dark mode toggle
+        const modeToggle = document.getElementById('mode-toggle');
+        modeToggle.addEventListener('click', function() {
+            const isDarkMode = body.classList.contains('dark-mode');
+
+            if (isDarkMode) {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                container.classList.remove('dark-mode');
+                container.classList.add('light-mode');
+                modeToggle.textContent = 'Switch to Dark Mode';
+                localStorage.setItem('darkMode', 'false');
+            } else {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                container.classList.remove('light-mode');
+                container.classList.add('dark-mode');
+                modeToggle.textContent = 'Switch to Light Mode';
+                localStorage.setItem('darkMode', 'true');
+            }
+        });
+        
+    </script>
+</body>
+</html>
