@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Chat Room</title>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="light-mode">
+    <div id="container" class="light-mode">
+        <h1>Secure Chat</h1>
+        <p class="subtitle">Welcome, {{ user.username }}</p>
+        
+        <div class="user-panel">
+            <span class="username-display">Logged in as: {{ user.username }}</span>
+            <div class="user-actions">
+                <a href="/profile" class="btn secondary small">Profile</a>
+                <a href="/logout" class="btn warning small">Logout</a>
+            </div>
+        </div>
+
+        <div id="chat-log"></div>
+
+        <div id="chat-form">
+            <input type="text" id="message" placeholder="Type a message..." autocomplete="off">
+            <div id="rate-info"></div>
+            <button id="send-btn">Send</button>
+        </div>                 
+
+        <button id="mode-toggle">Switch to Dark Mode</button>
+    </div>
+
+    <script>
+        // Store the username from the server
+        const currentUsername = "{{ user.username }}";
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const socket = io.connect('https://crpchat.live', {
+                transports: ['websocket'],
+                secure: true,
+                rejectUnauthorized: false
+            });
+            const chatLog = document.getElementById('chat-log');
+            const messageInput = document.getElementById('message');
+            const sendButton = document.getElementById('send-btn');
+            const rateInfo = document.getElementById('rate-info');
+            const modeToggle = document.getElementById('mode-toggle');
+            
+            // Dark mode toggle
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark-mode');
+                document.getElementById('container').classList.remove('light-mode');
+                document.getElementById('container').classList.add('dark-mode');
+                modeToggle.textContent = 'Switch to Light Mode';
+            }
+            
+            modeToggle.addEventListener('click', function() {
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                if (isDarkMode) {
+                    document.body.classList.remove('dark-mode');
+                    document.body.classList.add('light-mode');
+                    document.getElementById('container').classList.remove('dark-mode');
+                    document.getElementById('container').classList.add('light-mode');
+                    modeToggle.textContent = 'Switch to Dark Mode';
+                    localStorage.setItem('darkMode', 'false');
+                } else {
+                    document.body.classList.remove('light-mode');
+                    document.body.classList.add('dark-mode');
+                    document.getElementById('container').classList.remove('light-mode');
+                    document.getElementById('container').classList.add('dark-mode');
+                    modeToggle.textContent = 'Switch to Light Mode';
+                    localStorage.setItem('darkMode', 'true');
+                }
+            });
+            
+            // Socket connection events
+            socket.on('connect', function() {
+                console.log('Connected to server');
+                socket.emit('join');
+                socket.emit('request_rate_limit');
+            });
+            
+            socket.on('disconnect', function() {
+                console.log('Disconnected from server');
+                addSystemMessage('You have been disconnected from the server.');
+            });
+            
+            socket.on('unauthorized', function(data) {
+                addSystemMessage(data.message);
+                // Redirect to login page after a short delay
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            });
+            
+            socket.on('message', function(data) {
+                addChatMessage(data);
+                // Auto-scroll to bottom
+                chatLog.scrollTop = chatLog.scrollHeight;
+            });
+            
+            socket.on('rate_limit', function(seconds) {
+                const remaining = Math.ceil(parseFloat(seconds));
+                rateInfo.textContent = `Rate limited: Please wait ${remaining} seconds`;
+                rateInfo.classList.add('warning');
+                setTimeout(() => {
+                    socket.emit('request_rate_limit');
+                }, remaining * 1000);
+            });
+            
+            socket.on('until_rate_limit', function(messages) {
+                rateInfo.textContent = `${messages} message(s) remaining`;
+                rateInfo.classList.remove('warning');
+            });
+            
+            socket.on('invalid_message', function(msg) {
+                addSystemMessage('Error: ' + msg);
+            });
+            
+            // Message sending logic
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    socket.emit('send_message', {
+                        message: message
+                    });
+                    messageInput.value = '';
+                }
+            }
+            
+            sendButton.addEventListener('click', sendMessage);
+            
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Helper functions
+            function addChatMessage(data) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'message-header';
+                
+                const usernameSpan = document.createElement('span');
+                usernameSpan.className = 'username';
+                usernameSpan.textContent = data.username;
+                
+                // Highlight current user's messages
+                if (data.username === currentUsername) {
+                    messageDiv.classList.add('own-message');
+                }
+                
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'timestamp';
+                timeSpan.textContent = data.timestamp;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = data.message;
+                
+                headerDiv.appendChild(usernameSpan);
+                headerDiv.appendChild(timeSpan);
+                //headerDiv.appendChild(ipSpan);
+                
+                messageDiv.appendChild(headerDiv);
+                messageDiv.appendChild(contentDiv);
+                
+                chatLog.appendChild(messageDiv);
+            }
+            
+            function addSystemMessage(message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message system-message';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = message;
+                
+                messageDiv.appendChild(contentDiv);
+                chatLog.appendChild(messageDiv);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
